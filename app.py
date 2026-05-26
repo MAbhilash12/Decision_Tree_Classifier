@@ -3,216 +3,314 @@ import pandas as pd
 import numpy as np
 import joblib
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix
 )
 
-# =====================================================
+from sklearn.tree import plot_tree
+
+# ==========================================
 # PAGE CONFIG
-# =====================================================
+# ==========================================
 
 st.set_page_config(
-    page_title="KNN Classifier App",
-    page_icon="🩺",
+    page_title="Decision Tree Classifier",
     layout="wide"
 )
 
-# =====================================================
-# LOAD DATASET
-# =====================================================
-
-df = pd.read_csv("data/diabetes_prediction_dataset.csv")
-
-# =====================================================
-# ENCODE CATEGORICAL COLUMNS
-# =====================================================
-
-gender_map = {
-    "Female": 0,
-    "Male": 1,
-    "Other": 2
-}
-
-smoking_map = {
-    "never": 0,
-    "No Info": 1,
-    "current": 2,
-    "former": 3,
-    "ever": 4,
-    "not current": 5
-}
-
-df['gender'] = df['gender'].map(gender_map)
-
-df['smoking_history'] = df['smoking_history'].map(smoking_map)
-
-# =====================================================
-# FEATURES & TARGET
-# =====================================================
-
-X = df.drop('diabetes', axis=1)
-
-y = df['diabetes']
-
-# =====================================================
-# LOAD MODEL & SCALER
-# =====================================================
-
-model = joblib.load("models/knn_classifier.pkl")
-
-scaler = joblib.load("models/scaler.pkl")
-
-# =====================================================
+# ==========================================
 # TITLE
-# =====================================================
+# ==========================================
 
-st.title("🩺 Diabetes Prediction using KNN Classifier")
+st.title("🌳 Decision Tree Classifier App")
 
-st.write("Machine Learning Classification Project")
+# ==========================================
+# LOAD DATASET
+# ==========================================
 
-# =====================================================
-# DATASET PREVIEW
-# =====================================================
+df = pd.read_csv("data/heart.csv")
 
-st.subheader("Dataset Preview")
+# ==========================================
+# LOAD MODEL & SCALER
+# ==========================================
+
+model = joblib.load(
+    "models/decision_tree_model.pkl"
+)
+
+scaler = joblib.load(
+    "models/scaler.pkl"
+)
+
+# ==========================================
+# DATASET HEAD
+# ==========================================
+
+st.subheader("📊 Dataset Head")
 
 st.dataframe(df.head())
 
-# =====================================================
+# ==========================================
 # SIDEBAR INPUTS
-# =====================================================
+# ==========================================
 
 st.sidebar.header("Enter Patient Details")
 
-gender = st.sidebar.selectbox(
-    "Gender",
-    ["Female", "Male", "Other"]
-)
-
 age = st.sidebar.slider(
     "Age",
-    1,
-    100,
-    30
+    20,
+    80,
+    40
 )
 
-bmi = st.sidebar.slider(
-    "BMI",
-    10.0,
-    60.0,
-    25.0
+sex = st.sidebar.selectbox(
+    "Sex",
+    [0, 1]
 )
 
-blood_glucose_level = st.sidebar.slider(
-    "Blood Glucose Level",
-    50,
-    300,
+cp = st.sidebar.slider(
+    "Chest Pain Type",
+    0,
+    3,
+    1
+)
+
+trestbps = st.sidebar.slider(
+    "Resting Blood Pressure",
+    80,
+    200,
     120
 )
 
-HbA1c_level = st.sidebar.slider(
-    "HbA1c Level",
-    3.0,
-    15.0,
-    5.5
+chol = st.sidebar.slider(
+    "Cholesterol",
+    100,
+    600,
+    200
 )
 
-# =====================================================
-# FIXED VALUES
-# =====================================================
+fbs = st.sidebar.selectbox(
+    "Fasting Blood Sugar",
+    [0, 1]
+)
 
-hypertension = 0
-heart_disease = 0
-smoking_history = 0
+restecg = st.sidebar.slider(
+    "Rest ECG",
+    0,
+    2,
+    1
+)
 
-# =====================================================
-# INPUT DATAFRAME
-# =====================================================
+thalach = st.sidebar.slider(
+    "Max Heart Rate",
+    60,
+    220,
+    150
+)
 
-input_df = pd.DataFrame([{
-    'gender': gender_map[gender],
-    'age': age,
-    'hypertension': hypertension,
-    'heart_disease': heart_disease,
-    'smoking_history': smoking_history,
-    'bmi': bmi,
-    'HbA1c_level': HbA1c_level,
-    'blood_glucose_level': blood_glucose_level
-}])
+exang = st.sidebar.selectbox(
+    "Exercise Induced Angina",
+    [0, 1]
+)
 
-# =====================================================
+oldpeak = st.sidebar.slider(
+    "Old Peak",
+    0.0,
+    6.0,
+    1.0
+)
+
+slope = st.sidebar.slider(
+    "Slope",
+    0,
+    2,
+    1
+)
+
+ca = st.sidebar.slider(
+    "CA",
+    0,
+    4,
+    0
+)
+
+thal = st.sidebar.slider(
+    "Thal",
+    0,
+    3,
+    1
+)
+
+# ==========================================
+# INPUT ARRAY
+# ==========================================
+
+input_data = np.array([[
+    age,
+    sex,
+    cp,
+    trestbps,
+    chol,
+    fbs,
+    restecg,
+    thalach,
+    exang,
+    oldpeak,
+    slope,
+    ca,
+    thal
+]])
+
+# ==========================================
 # SCALE INPUT
-# =====================================================
+# ==========================================
 
-input_scaled = scaler.transform(input_df)
+input_scaled = scaler.transform(
+    input_data
+)
 
-# =====================================================
-# PREDICTION
-# =====================================================
+# ==========================================
+# PREDICTION BUTTON
+# ==========================================
 
-prediction = model.predict(input_scaled)[0]
+if st.sidebar.button("Predict"):
 
-# =====================================================
-# OUTPUT
-# =====================================================
+    prediction = model.predict(
+        input_scaled
+    )
 
-st.subheader("Prediction Result")
+    st.subheader("🎯 Prediction Result")
 
-if prediction == 1:
-    st.error("⚠️ Patient is likely Diabetic")
-else:
-    st.success("✅ Patient is Non-Diabetic")
+    if prediction[0] == 1:
 
-# =====================================================
-# MODEL PERFORMANCE
-# =====================================================
+        st.success(
+            "Person Has Heart Disease"
+        )
+
+    else:
+
+        st.error(
+            "Person Does Not Have Heart Disease"
+        )
+
+# ==========================================
+# MODEL ACCURACY
+# ==========================================
+
+X = df.drop("target", axis=1)
+
+y = df["target"]
 
 X_scaled = scaler.transform(X)
 
-y_pred = model.predict(X_scaled)
+preds = model.predict(X_scaled)
 
-accuracy = accuracy_score(y, y_pred)
+accuracy = accuracy_score(
+    y,
+    preds
+)
 
-st.subheader("Model Accuracy")
+st.subheader("📈 Model Accuracy")
 
-st.metric("Accuracy", f"{accuracy:.4f}")
+st.metric(
+    label="Accuracy",
+    value=f"{accuracy*100:.2f}%"
+)
 
-# =====================================================
+# ==========================================
+# TARGET DISTRIBUTION
+# ==========================================
+
+st.subheader("📊 Target Distribution")
+
+fig1, ax1 = plt.subplots()
+
+sns.countplot(
+    x="target",
+    data=df,
+    ax=ax1
+)
+
+st.pyplot(fig1)
+
+# ==========================================
 # CONFUSION MATRIX
-# =====================================================
+# ==========================================
 
-st.subheader("Confusion Matrix")
+st.subheader("📌 Confusion Matrix")
 
-cm = confusion_matrix(y, y_pred)
+cm = confusion_matrix(
+    y,
+    preds
+)
 
-fig, ax = plt.subplots()
+fig2, ax2 = plt.subplots()
 
-ax.imshow(cm)
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    ax=ax2
+)
 
-ax.set_xlabel("Predicted")
+ax2.set_xlabel("Predicted")
 
-ax.set_ylabel("Actual")
+ax2.set_ylabel("Actual")
 
-for i in range(len(cm)):
-    for j in range(len(cm)):
-        ax.text(j, i, cm[i, j], ha='center', va='center')
+st.pyplot(fig2)
 
-st.pyplot(fig)
+# ==========================================
+# FEATURE IMPORTANCE
+# ==========================================
 
-# =====================================================
-# DATASET SHAPE
-# =====================================================
+st.subheader("⭐ Feature Importance")
 
-st.subheader("Dataset Shape")
+importance = model.feature_importances_
 
-st.write(df.shape)
+feature_df = pd.DataFrame({
+    "Feature": X.columns,
+    "Importance": importance
+})
 
-# =====================================================
-# STATISTICS
-# =====================================================
+feature_df = feature_df.sort_values(
+    by="Importance",
+    ascending=False
+)
 
-st.subheader("Dataset Statistics")
+fig3, ax3 = plt.subplots(figsize=(10,5))
 
-st.dataframe(df.describe())
+sns.barplot(
+    x="Importance",
+    y="Feature",
+    data=feature_df,
+    ax=ax3
+)
+
+st.pyplot(fig3)
+
+# ==========================================
+# DECISION TREE VISUALIZATION
+# ==========================================
+
+st.subheader("🌳 Decision Tree Visualization")
+
+fig4, ax4 = plt.subplots(
+    figsize=(20,10)
+)
+
+plot_tree(
+    model,
+    feature_names=X.columns,
+    class_names=[
+        "No Disease",
+        "Disease"
+    ],
+    filled=True,
+    ax=ax4
+)
+
+st.pyplot(fig4)
